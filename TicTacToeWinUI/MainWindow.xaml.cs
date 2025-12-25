@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -50,7 +51,7 @@ namespace TicTacToeWinUI
         }
 
         // Change turn and apply changes to grid content
-        private void ChooseTurn(Button clickedButton)
+        private async Task ChooseTurn(Button clickedButton)
         {
             // Read the button's Tag ("row,col") and convert it to board indices 
             string tag = clickedButton.Tag.ToString();
@@ -85,11 +86,18 @@ namespace TicTacToeWinUI
                         btn.IsEnabled = false;
                 }
 
+                ResultText.Text = turn + " won the game!";
+                await RestartGame(); // Call restart game method
+
                 return;
             }
             if (IsDraw())
             {
                 System.Diagnostics.Debug.WriteLine("Game is a draw.");
+
+                ResultText.Text = "It's a draw!"; // Set ContentDialog message
+                await RestartGame(); // Call restart game method
+
                 return;
             }
 
@@ -148,6 +156,41 @@ namespace TicTacToeWinUI
             }
             
             return true; // board is filled, no clear winner
+        }
+
+        // Restart game method
+        private async Task RestartGame()
+        {
+            
+            
+            var result = await RestartDialog.ShowAsync();
+
+            if (result != ContentDialogResult.Primary)
+            {
+                // No pressed, then exit app
+                Microsoft.UI.Xaml.Application.Current.Exit();
+                return; 
+            }
+
+
+            // YES pressed, then reset state
+            turn = 'x';
+
+            // Clear board array
+            for (int r = 0; r < 3; r++)
+                for (int c = 0; c < 3; c++)
+                    board[r, c] = '\0';
+
+            // Clear + re-enable all buttons in the grid
+            foreach (var child in TicTacToeGrid.Children)
+            {
+                if (child is Button btn)
+                {
+                    btn.Content = "";      // or null
+                    btn.IsEnabled = true;
+                }
+            }
+
         }
     }
 }
